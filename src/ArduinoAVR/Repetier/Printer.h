@@ -73,7 +73,8 @@ public:
     static long destinationSteps[4];         ///< Target position in steps.
 #if NONLINEAR_SYSTEM
     static long currentDeltaPositionSteps[4];
-    static long maxDeltaPositionSteps;
+    static long maxDeltaPositionSteps[3];
+    static long minDeltaPositionSteps[3];
     static long deltaDiagonalStepsSquared;
     static float deltaDiagonalStepsSquaredF;
     static long deltaAPosXSteps;

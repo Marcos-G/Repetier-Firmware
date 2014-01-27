@@ -69,7 +69,9 @@ long Printer::advanceExecuted;             ///< Executed advance steps
 int Printer::advanceStepsSet;
 #endif
 #if NONLINEAR_SYSTEM
-long Printer::maxDeltaPositionSteps;
+long Printer::maxDeltaPositionSteps[];
+long Printer::minDeltaPositionSteps[];
+
 long Printer::deltaDiagonalStepsSquared;
 float Printer::deltaDiagonalStepsSquaredF;
 long Printer::deltaAPosXSteps;
@@ -170,16 +172,37 @@ deltaAPosXSteps = (EEPROM::deltaAlphaA()*EEPROM::deltaAlphaA())+(EEPROM::deltaAl
     deltaAPosYSteps = 2*EEPROM::deltaAlphaA()*EEPROM::deltaAlphaB();
     deltaBPosXSteps = EEPROM::deltaRadiusCorrectionA();
     deltaBPosYSteps = EEPROM::deltaRadiusCorrectionB();    
-long cart[3], delta[3];
-    cart[0] = cart[1] = 0;
+
+
+    xMaxSteps = (long)(axisStepsPerMM[0]*(xMin+xLength));
+    yMaxSteps = (long)(axisStepsPerMM[1]*(yMin+yLength));
+    zMaxSteps = (long)(axisStepsPerMM[2]*zLength);
+    xMinSteps = (long)(axisStepsPerMM[0]*xMin);
+    yMinSteps = (long)(axisStepsPerMM[1]*yMin);
+    zMinSteps = 0;
+	long cart[3], delta[3];
+    cart[0] = xMinSteps;
+    cart[1] = yMinSteps;
     cart[2] = zMaxSteps;
     transformCartesianStepsToDeltaSteps(cart, delta);
-    maxDeltaPositionSteps = delta[0];
-    xMaxSteps = (long)(axisStepsPerMM[2]*(xMin+xLength));
-    yMaxSteps = (long)(axisStepsPerMM[2]*(yMin+yLength));
-    xMinSteps = (long)(axisStepsPerMM[2]*xMin);
-    yMinSteps = (long)(axisStepsPerMM[2]*yMin);
-    zMinSteps = 0;
+    maxDeltaPositionSteps[1] = delta[1];
+    maxDeltaPositionSteps[2] = delta[2];
+    cart[1] = yMaxSteps;
+    transformCartesianStepsToDeltaSteps(cart, delta);
+    maxDeltaPositionSteps[0] = delta[0];
+    cart[0] = xMaxSteps;
+    cart[1] = yMinSteps;
+    cart[2] = zMinSteps;
+    transformCartesianStepsToDeltaSteps(cart, delta);
+    minDeltaPositionSteps[0] = delta[0];
+    cart[1] = yMinSteps;
+    transformCartesianStepsToDeltaSteps(cart, delta);
+    minDeltaPositionSteps[1] = delta[1];
+    minDeltaPositionSteps[0]=delta[0];
+
+
+
+
 #elif DRIVE_SYSTEM==4
     deltaDiagonalStepsSquared = long(EEPROM::deltaDiagonalRodLength()*axisStepsPerMM[0]);
     if(deltaDiagonalStepsSquared>46000)
@@ -793,28 +816,31 @@ void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 
 
 #if DRIVE_SYSTEM==3
-                                       void Printer::deltaMoveToTopEndstops(float feedrate)
+                                      void Printer::deltaMoveToTopEndstops(float feedrate)
 {
-    for (uint8_t i=0; i<3; i++)
+     for (uint8_t i=0; i<3; i++)
         Printer::currentPositionSteps[i] = 0;
     transformCartesianStepsToDeltaSteps(currentPositionSteps, currentDeltaPositionSteps);
     PrintLine::moveRelativeDistanceInSteps(0,0,zMaxSteps*1.5,0,feedrate, true, true);
     offsetX = 0;
     offsetY = 0;
+
 }
 void Printer::homeXAxis()
 {
     destinationSteps[X_AXIS] = 0;
     PrintLine::queueDeltaMove(true,false,false);
+
 }
 void Printer::homeYAxis()
 {
-    Printer::destinationSteps[Y_AXIS] = 0;
+     Printer::destinationSteps[Y_AXIS] = 0;
     PrintLine::queueDeltaMove(true,false,false);
+
 }
 void Printer::homeZAxis() // Delta z homing
 {
-    deltaMoveToTopEndstops(Printer::homingFeedrate[Z_AXIS]);
+     deltaMoveToTopEndstops(Printer::homingFeedrate[Z_AXIS]);
     PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE,0,Printer::homingFeedrate[Z_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR, true, false);
     deltaMoveToTopEndstops(Printer::homingFeedrate[Z_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR);
 #if defined(ENDSTOP_Z_BACK_ON_HOME)
@@ -847,17 +873,18 @@ void Printer::homeZAxis() // Delta z homing
     coordinateOffset[Y_AXIS] = 0;
     coordinateOffset[Z_AXIS] = 0;
     transformCartesianStepsToDeltaSteps(currentPositionSteps, currentDeltaPositionSteps);
-    maxDeltaPositionSteps = currentDeltaPositionSteps[X_AXIS];
+    //maxDeltaPositionSteps = currentDeltaPositionSteps[X_AXIS];
 #if defined(ENDSTOP_Z_BACK_ON_HOME)
     if(ENDSTOP_Z_BACK_ON_HOME > 0)
-        maxDeltaPositionSteps += axisStepsPerMM[Z_AXIS]*ENDSTOP_Z_BACK_ON_HOME;
+        //maxDeltaPositionSteps += axisStepsPerMM[Z_AXIS]*ENDSTOP_Z_BACK_ON_HOME;
 #endif
     Extruder::selectExtruderById(Extruder::current->id);
+
 }
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // Delta homing code
 {
-    long steps;
+     long steps;
     setHomed(true);
     bool homeallaxis = (xaxis && yaxis && zaxis) || (!xaxis && !yaxis && !zaxis);
     if (X_MAX_PIN > -1 && Y_MAX_PIN > -1 && Z_MAX_PIN > -1 && MAX_HARDWARE_ENDSTOP_X & MAX_HARDWARE_ENDSTOP_Y && MAX_HARDWARE_ENDSTOP_Z)
@@ -880,6 +907,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // Delta homing code
     updateCurrentPosition();
     moveToReal(0,0,Printer::zMin+Printer::zLength,IGNORE_COORDINATE,homingFeedrate[Z_AXIS]); // Move to designed coordinates including translation
     UI_CLEAR_STATUS
+
 }
 #else
 #if DRIVE_SYSTEM==4  // Tuga printer homing

@@ -1025,8 +1025,11 @@ inline uint16_t PrintLine::calculateDeltaSubSegments(uint8_t softEndstop)
             d->dir = 0;
             for(i=0; i < NUM_AXIS - 1; i++)
             {
-                if (softEndstop && destinationDeltaSteps[i] > Printer::maxDeltaPositionSteps)
-                    destinationDeltaSteps[i] = Printer::maxDeltaPositionSteps;
+                if (softEndstop && destinationDeltaSteps[i] > Printer::maxDeltaPositionSteps[i])
+                    destinationDeltaSteps[i] = Printer::maxDeltaPositionSteps[i];
+			if (softEndstop && destinationDeltaSteps[i] < Printer::minDeltaPositionSteps[i])
+                    destinationDeltaSteps[i] = Printer::minDeltaPositionSteps[i];
+
                 long delta = destinationDeltaSteps[i] - Printer::currentDeltaPositionSteps[i];
 Com::printFLN(Com::tZ, delta);
 
