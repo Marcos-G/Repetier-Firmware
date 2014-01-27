@@ -96,46 +96,13 @@ is a full cartesian system where x, y and z moves are handled by separate motors
 Cases 1 and 2 cover all needed xy H gantry systems. If you get results mirrored etc. you can swap motor connections for x and y.
 If a motor turns in the wrong direction change INVERT_X_DIR or INVERT_Y_DIR.
 */
-#define DRIVE_SYSTEM 0
-
+#define DRIVE_SYSTEM 3
 // ##########################################################################################
 // ##                               Calibration                                            ##
 // ##########################################################################################
 
 /** Drive settings for the Delta printers
 */
-#if DRIVE_SYSTEM==3
-    // ***************************************************
-    // *** These parameter are only for Delta printers ***
-    // ***************************************************
-
-/** \brief Delta drive type: 0 - belts and pulleys, 1 - filament drive */
-#define DELTA_DRIVE_TYPE 0
-
-#if DELTA_DRIVE_TYPE == 0
-/** \brief Pitch in mm of drive belt. GT2 = 2mm */
-#define BELT_PITCH 2
-/** \brief Number of teeth on X, Y and Z tower pulleys */
-#define PULLEY_TEETH 20
-#define PULLEY_CIRCUMFERENCE (BELT_PITCH * PULLEY_TEETH)
-#elif DELTA_DRIVE_TYPE == 1
-/** \brief Filament pulley diameter in milimeters */
-#define PULLEY_DIAMETER 10
-#define PULLEY_CIRCUMFERENCE (PULLEY_DIAMETER * 3.1415927)
-#endif
-
-/** \brief Steps per rotation of stepper motor */
-#define STEPS_PER_ROTATION 200
-
-/** \brief Micro stepping rate of X, Y and Y tower stepper drivers */
-#define MICRO_STEPS 16
-
-// Calculations
-#define AXIS_STEPS_PER_MM ((float)(MICRO_STEPS * STEPS_PER_ROTATION) / PULLEY_CIRCUMFERENCE)
-#define XAXIS_STEPS_PER_MM AXIS_STEPS_PER_MM
-#define YAXIS_STEPS_PER_MM AXIS_STEPS_PER_MM
-#define ZAXIS_STEPS_PER_MM AXIS_STEPS_PER_MM
-#else
 // *******************************************************
 // *** These parameter are for all other printer types ***
 // *******************************************************
@@ -144,14 +111,14 @@ If a motor turns in the wrong direction change INVERT_X_DIR or INVERT_Y_DIR.
 /** \brief Number of steps for a 1mm move in x direction.
 For xy gantry use 2*belt moved!
 Overridden if EEPROM activated. */
-#define XAXIS_STEPS_PER_MM 98.425196
+#define XAXIS_STEPS_PER_MM 154.062
 /** \brief Number of steps for a 1mm move in y direction.
 For xy gantry use 2*belt moved!
 Overridden if EEPROM activated.*/
-#define YAXIS_STEPS_PER_MM 98.425196
+#define YAXIS_STEPS_PER_MM 154.062
 /** \brief Number of steps for a 1mm move in z direction  Overridden if EEPROM activated.*/
 #define ZAXIS_STEPS_PER_MM 2560
-#endif
+
 
 // ##########################################################################################
 // ##                           Extruder configuration                                     ##
@@ -733,13 +700,13 @@ on this endstop.
 */
 
 /** \brief column positions - change only to correct build imperfections! */
-#define DELTA_ALPHA_A 210
-#define DELTA_ALPHA_B 330
+#define DELTA_ALPHA_A 180
+#define DELTA_ALPHA_B 180
 #define DELTA_ALPHA_C 90
 
 /** Correct radius by this value for each column. Perfect builds have 0 everywhere. */
-#define DELTA_RADIUS_CORRECTION_A 0
-#define DELTA_RADIUS_CORRECTION_B 0
+#define DELTA_RADIUS_CORRECTION_A -100
+#define DELTA_RADIUS_CORRECTION_B 118
 #define DELTA_RADIUS_CORRECTION_C 0
 
 /** \brief Horizontal offset of the universal joints on the end effector (moving platform).
@@ -1018,7 +985,7 @@ matches, the stored values are used to overwrite the settings.
 IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, as they are
            taken from the EEPROM.
 */
-#define EEPROM_MODE 1
+#define EEPROM_MODE 0
 
 
 /**************** duplicate motor driver ***************

@@ -811,73 +811,33 @@ void PrintLine::waitForXFreeLines(uint8_t b)
   @param deltaPosSteps Result array with tower coordinates.
   @returns 1 if cartesian coordinates have a valid delta tower position 0 if not.
 */
-uint8_t transformCartesianStepsToDeltaSteps(long cartesianPosSteps[], long deltaPosSteps[])
+uint8_t transformCartesianStepsToDeltaSteps(long cartesianPosSteps[], long radPosSteps[])
 {
-    if(Printer::isLargeMachine())
-    {
-        float temp = Printer::deltaAPosYSteps - cartesianPosSteps[Y_AXIS];
-        float opt = Printer::deltaDiagonalStepsSquaredF - temp*temp;
-        float temp2 = Printer::deltaAPosXSteps - cartesianPosSteps[X_AXIS];
-        if ((temp = opt - temp2*temp2) >= 0)
-            deltaPosSteps[X_AXIS] = sqrt(temp) + cartesianPosSteps[Z_AXIS];
-        else
-            return 0;
+    radPosSteps[2]=cartesianPosSteps[2];
 
-        temp = Printer::deltaBPosYSteps - cartesianPosSteps[Y_AXIS];
-        opt = Printer::deltaDiagonalStepsSquaredF - temp*temp;
-        temp2 = Printer::deltaBPosXSteps - cartesianPosSteps[X_AXIS];
-        if ((temp = opt - temp2*temp2) >= 0)
-            deltaPosSteps[Y_AXIS] = sqrt(temp) + cartesianPosSteps[Z_AXIS];
-        else
-            return 0;
+float x=(cartesianPosSteps[0]/Printer::axisStepsPerMM[0])+Printer::deltaBPosXSteps;
 
-        temp = Printer::deltaCPosYSteps - cartesianPosSteps[Y_AXIS];
-        opt = Printer::deltaDiagonalStepsSquaredF - temp*temp;
-        temp2 = Printer::deltaCPosXSteps - cartesianPosSteps[X_AXIS];
-        if ((temp = opt - temp2*temp2) >= 0)
-            deltaPosSteps[Z_AXIS] = sqrt(temp) + cartesianPosSteps[Z_AXIS];
-        else
-            return 0;
-        return 1;
-    }
-    else
-    {
-        long temp = Printer::deltaAPosYSteps - cartesianPosSteps[Y_AXIS];
-        long opt = Printer::deltaDiagonalStepsSquared - temp*temp;
-        long temp2 = Printer::deltaAPosXSteps - cartesianPosSteps[X_AXIS];
-        if ((temp = opt - temp2*temp2) >= 0)
-#ifdef FAST_INTEGER_SQRT
-            deltaPosSteps[X_AXIS] = HAL::integerSqrt(temp) + cartesianPosSteps[Z_AXIS];
-#else
-            deltaPosSteps[X_AXIS] = sqrt(temp) + cartesianPosSteps[Z_AXIS];
-#endif
-        else
-            return 0;
+float y=(cartesianPosSteps[1]/Printer::axisStepsPerMM[1])+Printer::deltaBPosYSteps;
+float ang=0;
+if(x<0){
+ang=180+((atan(y/x))*(180/M_PI));
+}else if(x>0){
+ang=((atan(y/x))*(180/M_PI));
+}else if(x==0){
+ang=90;
+}
 
-        temp = Printer::deltaBPosYSteps - cartesianPosSteps[Y_AXIS];
-        opt = Printer::deltaDiagonalStepsSquared - temp*temp;
-        temp2 = Printer::deltaBPosXSteps - cartesianPosSteps[X_AXIS];
-        if ((temp = opt - temp2*temp2) >= 0)
-#ifdef FAST_INTEGER_SQRT
-            deltaPosSteps[Y_AXIS] = HAL::integerSqrt(temp) + cartesianPosSteps[Z_AXIS];
-#else
-            deltaPosSteps[Y_AXIS] = sqrt(temp) + cartesianPosSteps[Z_AXIS];
-#endif
-        else
-            return 0;
+float m=pow(x,2)+pow(y,2);
+float z=90-(acos((Printer::deltaAPosXSteps-m)/Printer::deltaAPosYSteps)*(180/M_PI)/2);
 
-        temp = Printer::deltaCPosYSteps - cartesianPosSteps[Y_AXIS];
-        opt = Printer::deltaDiagonalStepsSquared - temp*temp;
-        temp2 = Printer::deltaCPosXSteps - cartesianPosSteps[X_AXIS];
-        if ((temp = opt - temp2*temp2) >= 0)
-#ifdef FAST_INTEGER_SQRT
-            deltaPosSteps[Z_AXIS] = HAL::integerSqrt(temp) + cartesianPosSteps[Z_AXIS];
-#else
-            deltaPosSteps[Z_AXIS] = sqrt(temp) + cartesianPosSteps[Z_AXIS];
-#endif
-        else
-            return 0;
-    }
+
+radPosSteps[0]=(ang-z)*Printer::axisStepsPerMM[0];
+radPosSteps[1]=(ang+z)*Printer::axisStepsPerMM[1];
+Com::printFLN(Com::tX, (ang-z));
+Com::printFLN(Com::tY, (ang+z));
+Com::printFLN(Com::tJ,radPosSteps[0]);
+Com::printFLN(Com::tR,radPosSteps[1]);
+
     return 1;
 }
 #endif
@@ -1068,6 +1028,8 @@ inline uint16_t PrintLine::calculateDeltaSubSegments(uint8_t softEndstop)
                 if (softEndstop && destinationDeltaSteps[i] > Printer::maxDeltaPositionSteps)
                     destinationDeltaSteps[i] = Printer::maxDeltaPositionSteps;
                 long delta = destinationDeltaSteps[i] - Printer::currentDeltaPositionSteps[i];
+Com::printFLN(Com::tZ, delta);
+
                 if (delta > 0)
                 {
                     d->dir |= 17<<i;

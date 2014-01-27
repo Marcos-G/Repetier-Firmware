@@ -166,31 +166,11 @@ void Printer::constrainDestinationCoords()
 void Printer::updateDerivedParameter()
 {
 #if DRIVE_SYSTEM==3
-    axisStepsPerMM[X_AXIS] = axisStepsPerMM[Y_AXIS] = axisStepsPerMM[Z_AXIS];
-    maxAccelerationMMPerSquareSecond[X_AXIS] = maxAccelerationMMPerSquareSecond[Y_AXIS] = maxAccelerationMMPerSquareSecond[Z_AXIS];
-    homingFeedrate[X_AXIS] = homingFeedrate[Y_AXIS] = homingFeedrate[Z_AXIS];
-    maxFeedrate[X_AXIS] = maxFeedrate[Y_AXIS] = maxFeedrate[Z_AXIS];
-    maxTravelAccelerationMMPerSquareSecond[X_AXIS] = maxTravelAccelerationMMPerSquareSecond[Y_AXIS] = maxTravelAccelerationMMPerSquareSecond[Z_AXIS];
-    zMaxSteps = axisStepsPerMM[Z_AXIS]*(zLength - zMin);
-    float radius0 = EEPROM::deltaHorizontalRadius();
-    float radiusA = radius0 + EEPROM::deltaRadiusCorrectionA();
-    float radiusB = radius0 + EEPROM::deltaRadiusCorrectionA();
-    float radiusC = radius0 + EEPROM::deltaRadiusCorrectionA();
-    deltaAPosXSteps = floor(radiusA * cos(EEPROM::deltaAlphaA() * M_PI/180.0) * axisStepsPerMM[2] + 0.5);
-    deltaAPosYSteps = floor(radiusA * sin(EEPROM::deltaAlphaA() * M_PI/180.0) * axisStepsPerMM[2] + 0.5);
-    deltaBPosXSteps = floor(radiusB * cos(EEPROM::deltaAlphaB() * M_PI/180.0) * axisStepsPerMM[2] + 0.5);
-    deltaBPosYSteps = floor(radiusB * sin(EEPROM::deltaAlphaB() * M_PI/180.0) * axisStepsPerMM[2] + 0.5);
-    deltaCPosXSteps = floor(radiusC * cos(EEPROM::deltaAlphaC() * M_PI/180.0) * axisStepsPerMM[2] + 0.5);
-    deltaCPosYSteps = floor(radiusC * sin(EEPROM::deltaAlphaC() * M_PI/180.0) * axisStepsPerMM[2] + 0.5);
-    deltaDiagonalStepsSquared = long(EEPROM::deltaDiagonalRodLength()*axisStepsPerMM[2]);
-    if(deltaDiagonalStepsSquared>46000 || 2*EEPROM::deltaHorizontalRadius()*axisStepsPerMM[2]>46000)
-    {
-        setLargeMachine(true);
-        deltaDiagonalStepsSquaredF = float(deltaDiagonalStepsSquared)*float(deltaDiagonalStepsSquared);
-    }
-    else
-        deltaDiagonalStepsSquared = deltaDiagonalStepsSquared*deltaDiagonalStepsSquared;
-    long cart[3], delta[3];
+deltaAPosXSteps = (EEPROM::deltaAlphaA()*EEPROM::deltaAlphaA())+(EEPROM::deltaAlphaB()*EEPROM::deltaAlphaB());
+    deltaAPosYSteps = 2*EEPROM::deltaAlphaA()*EEPROM::deltaAlphaB();
+    deltaBPosXSteps = EEPROM::deltaRadiusCorrectionA();
+    deltaBPosYSteps = EEPROM::deltaRadiusCorrectionB();    
+long cart[3], delta[3];
     cart[0] = cart[1] = 0;
     cart[2] = zMaxSteps;
     transformCartesianStepsToDeltaSteps(cart, delta);
